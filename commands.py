@@ -12,7 +12,7 @@ class Command(object):
         words = line.split(" ")
         if not len(words):
             return None
-        command_name = words[0].lower
+        command_name = words[0].lower()
         if command_name in COMMANDS.keys():
             return COMMANDS[command_name](line[len(command_name) + 1:])
         else:
@@ -31,7 +31,7 @@ class SetModeCommand(Command):
     arguments_regex = re.compile("(?P<mode>\d+)")
 
     def __init__(self, line):
-        args = re.match(line, self.arguments_regex)
+        args = self.arguments_regex.match(line)
         if not args:
             raise CommandArgumentException("Incorrect number of arguments to the 'mod'"
                                            " command. Arguments should be 'mode'.")
@@ -46,7 +46,7 @@ class SetColorCommand(Command):
     arguments_regex = re.compile("(?P<red>\d+) (?P<green>\d+) (?P<blue>\d+)")
 
     def __init__(self, line):
-        args = re.match(line, self.arguments_regex)
+        args = self.arguments_regex.match(line)
         if not args:
             raise CommandArgumentException("Incorrect number of arguments to the 'rgb'"
                                            " command. Arguments should be 'red' 'green'"
@@ -65,7 +65,7 @@ class BindToKeyCommand(Command):
                                  "(?P<target_key>[a-zA-Z0-9_])")
 
     def __init__(self, line):
-        args = re.match(line, self.arguments_regex)
+        args = self.arguments_regex.match(line)
         if not args:
             raise CommandArgumentException()
 
