@@ -46,6 +46,20 @@ class G13Device(object):
         self.key_states = {}
         self.mode = 0
 
+        def dummy_managed_claim_interface(device, intf):
+            self.device._ctx.managed_open()
+
+            if isinstance(intf, usb.core.Interface):
+                i = intf.bInterfaceNumber
+            else:
+                i = intf
+
+            if i not in self.device._ctx._claimed_intf:
+                # self.backend.claim_interface(self.handle, i)
+                self.device._ctx._claimed_intf.add(i)
+
+        self.device._ctx.managed_claim_interface = dummy_managed_claim_interface
+
         self.init_lcd()
         self.set_mode_leds(0)
         self.set_key_color(0, 0, 0)
@@ -111,7 +125,8 @@ class G13Device(object):
         self.key_states[key] = False
 
     def handle_keys(self):
-        report = self.device.read(G13_KEY_ENDPOINT, G13_REPORT_SIZE, 1000)
+        print self.device
+        report = self.device.read(0x80 | G13_KEY_ENDPOINT, G13_REPORT_SIZE) #, 1000)
 
         for g13_key_index, g13_key_name in enumerate(G13_KEYS):
             actual_byte = report[3 + (g13_key_index / 8)]
@@ -164,7 +179,7 @@ def main():
         try:
             for g13 in g13s:
                 g13.handle_commands()
-                # status = g13.handle_keys()
+                status = g13.handle_keys()
                 # if not status:
                 #     running = False
         except KeyboardInterrupt:
