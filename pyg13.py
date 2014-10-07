@@ -46,20 +46,6 @@ class G13Device(object):
         self.key_states = {}
         self.mode = 0
 
-        def dummy_managed_claim_interface(device, intf):
-            self.device._ctx.managed_open()
-
-            if isinstance(intf, usb.core.Interface):
-                i = intf.bInterfaceNumber
-            else:
-                i = intf
-
-            if i not in self.device._ctx._claimed_intf:
-                # self.backend.claim_interface(self.handle, i)
-                self.device._ctx._claimed_intf.add(i)
-
-        self.device._ctx.managed_claim_interface = dummy_managed_claim_interface
-
         self.init_lcd()
         self.set_mode_leds(0)
         self.set_key_color(0, 0, 0)
@@ -125,20 +111,32 @@ class G13Device(object):
         self.key_states[key] = False
 
     def handle_keys(self):
-        print self.device
-        report = self.device.read(0x80 | G13_KEY_ENDPOINT, G13_REPORT_SIZE) #, 1000)
+        report = []
+        try:
+            report = self.device.read(usb.util.ENDPOINT_IN | G13_KEY_ENDPOINT,
+                                      G13_REPORT_SIZE)
+        except usb.core.USBError, e:
+            if not str(e).startswith("[Errno 60]"):
+                raise
 
-        for g13_key_index, g13_key_name in enumerate(G13_KEYS):
-            actual_byte = report[3 + (g13_key_index / 8)]
-            mask = 1 << (g13_key_index % 8)
-            is_pressed = actual_byte & mask
-            # if the key has changed state, we're going to want to perform the action
-            if self.get_key_state(g13_key_name) != is_pressed:
-                self.set_key_state(g13_key_name, is_pressed)
+        if len(report):
+            for g13_key_index, g13_key_name in enumerate(G13_KEYS):
+                actual_byte = report[3 + (g13_key_index / 8)]
+                mask = 1 << (g13_key_index % 8)
+                is_pressed = (actual_byte & mask) == 0
+                # if the key has changed state, we're going to want to perform the action
+                current_state = self.get_key_state(g13_key_name)
+                print ["%02x" % x for x in report]
+                if current_state != is_pressed:
+                    print "key: %s %s -> state %s %s" % (g13_key_name, current_state,
+                                                         actual_byte & mask, is_pressed)
+                    self.set_key_state(g13_key_name, is_pressed)
 
-                action = self.get_key_action(g13_key_name)
-                if action:
-                    action.perform(self, is_pressed)
+                    if not current_state:
+                        action = self.get_key_action(g13_key_name)
+                        if action:
+                            action.perform(self, is_pressed)
+                break
 
     def cleanup(self):
         # TODO: destroy the device cleanly?
@@ -180,8 +178,8 @@ def main():
             for g13 in g13s:
                 g13.handle_commands()
                 status = g13.handle_keys()
-                # if not status:
-                #     running = False
+                if not status:
+                    running = False
         except KeyboardInterrupt:
             running = False
 
