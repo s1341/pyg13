@@ -21,7 +21,7 @@ G13_KEYS = (["G%d" % x for x in range(1, 23)] +
             ["M%d" % x for x in range(1, 4)] +
             ["MR", "LEFT", "DOWN", "TOP", "UNDEF3", "LIGHT", "LIGHT2", "MISC_TOGGLE"])
 
-G13_KEYS = ["G13_KEY_%s" % x for x in G13_KEYS]
+# G13_KEYS = ["G13_KEY_%s" % x for x in G13_KEYS]
 
 
 LIBUSB_REQUEST_TYPE_STANDARD = (0x00 << 5)
@@ -126,7 +126,7 @@ class G13Device(object):
                 is_pressed = (actual_byte & mask) == 0
                 # if the key has changed state, we're going to want to perform the action
                 current_state = self.get_key_state(g13_key_name)
-                print ["%02x" % x for x in report]
+                # print ["%02x" % x for x in report]
                 if current_state != is_pressed:
                     print "key: %s %s -> state %s %s" % (g13_key_name, current_state,
                                                          actual_byte & mask, is_pressed)
@@ -136,13 +136,12 @@ class G13Device(object):
                         action = self.get_key_action(g13_key_name)
                         if action:
                             action.perform(self, is_pressed)
-                break
+        return True
 
     def cleanup(self):
         # TODO: destroy the device cleanly?
         os.close(self.command_fifo)
         os.remove(self.command_fifo_name)
-
 
 def parse_args():
     import argparse

@@ -1,23 +1,20 @@
 import platform
+import pykeyboard
 
 
 class Action(object):
     def perform(self, device, key_state):
         pass
 
-if platform.uname()[0] == "Darwin":
-    class SendKeyAction(Action):
-        def __init__(self, key):
-            # TODO: convert key into OSX virtual key
-            self.key = key
+keyboard = pykeyboard.PyKeyboard()
 
-        def perform(self, device, key_state):
-            import Quartz
+class SendKeyAction(Action):
+    def __init__(self, key):
+        self.key = key
 
-            Quartz.CGEventPost(Quartz.kCGHIDEventTap,
-                               Quartz.CGEventCreateKeyboardEvent(None, self.key,
-                                                                 key_state))
-
-elif platform.uname()[0] == "Linux":
-    class SendKeyAction(Action):
-        pass
+    def perform(self, device, key_state):
+        print "SendKeyAction: ", self.key
+        if key_state:
+            keyboard.press_key(self.key)
+        else:
+            keyboard.release_key(self.key)

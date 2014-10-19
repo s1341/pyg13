@@ -62,7 +62,7 @@ class SetColorCommand(Command):
 
 class BindToKeyCommand(Command):
     arguments_regex = re.compile("(?P<g13_key>[a-zA-Z0-9_]+) "
-                                 "(?P<target_key>[a-zA-Z0-9_])")
+                                 "(?P<target_key>[a-zA-Z0-9_]+)")
 
     def __init__(self, line):
         args = self.arguments_regex.match(line)
